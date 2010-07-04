@@ -246,7 +246,7 @@ function chamilo_user($op, &$edit, &$account, $category = NULL) {
 }
 
 function chamilo_load_user_data(&$account) {
-  $result = db_query('SELECT duser, apikey, course_visibility, agenda_time_frame FROM {chamilo_user} WHERE uid = %d', $account->uid);
+  $result = db_query('SELECT duser, apikey, course_visibility, agenda_time_frame FROM {chamilo_user} WHERE user_id = %d', $account->uid);
   while ($user_data = db_fetch_object($result)) {
     $account->chamilo_settings = array(
       'user' => $user_data->duser,
@@ -275,11 +275,11 @@ function chamilo_save_user_data(&$edit, &$account, $category, $register = FALSE)
   }
 
   // Delete old user data
-  db_query("DELETE FROM {chamilo_user} WHERE uid = %d", $account->uid);
+  db_query("DELETE FROM {chamilo_user} WHERE user_id = %d", $account->uid);
 
   if ($save_data) {
     // Save data
-    db_query("INSERT INTO {chamilo_user} (uid, duser, apikey, course_visibility, agenda_time_frame) VALUES (%d, '%s', '%s', '%s', %d)", $account->uid, $data['chamilo_user'], $data['chamilo_apikey'], $data['chamilo_course_visibility'], $data['agenda_time_frame']);
+    db_query("INSERT INTO {chamilo_user} (user_id, duser, apikey, course_visibility, agenda_time_frame) VALUES (%d, '%s', '%s', '%s', %d)", $account->uid, $data['chamilo_user'], $data['chamilo_apikey'], $data['chamilo_course_visibility'], $data['agenda_time_frame']);
   }
 }
 
