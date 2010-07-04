@@ -61,9 +61,6 @@ function chamilo_schema() {
         'default' => 0,
       ),
     ),
-    'indexes' => array(
-      'uid' => array('uid'),
-    ),
     'primary key' => array('uid'),
   );
 
