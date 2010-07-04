@@ -27,7 +27,7 @@ function chamilo_schema() {
   $schema['chamilo_user'] = array(
     'description' => 'The table that store user data about chamilo.',
     'fields' => array(
-      'uid' => array(
+      'user_id' => array(
         'description' => 'The {users}.uid data owner.',
         'type' => 'int',
         'not null' => TRUE,
@@ -61,8 +61,14 @@ function chamilo_schema() {
         'default' => 0,
       ),
     ),
-    'primary key' => array('uid'),
+    'primary key' => array('user_id'),
   );
-
   return $schema;
+}
+
+/**
+ * Implementation of hook_update
+ */
+function chamilo_update_6001() {
+    db_change_field('chamilo_user', 'uid', 'user_id', array('type' => 'int', 'not null' => TRUE, 'default' => 0));
 }
