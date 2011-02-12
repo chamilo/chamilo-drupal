@@ -70,5 +70,6 @@ function chamilo_schema() {
  * Implementation of hook_update
  */
 function chamilo_update_6001() {
-    db_change_field('chamilo_user', 'uid', 'user_id', array('type' => 'int', 'not null' => TRUE, 'default' => 0));
+    $ret = array();
+    db_change_field($ret, 'chamilo_user', 'uid', 'user_id', array('type' => 'int', 'not null' => TRUE, 'default' => 0));
 }
