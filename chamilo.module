@@ -170,10 +170,10 @@ function chamilo_user($op, &$edit, &$account, $category = NULL) {
           $chamilo_user_courses = chamilo_soap_call('user_info', 'DokeosWSCourseListOfUser');
           // Deterimine wether to Create or Override account at chamilo
           if (is_array($chamilo_user_courses)) {
-            $action = 'DokeosWSCreateUser';
+            $action = 'WSCreateUser';
           }
           else {
-            $action = 'DokeosWSUpdateUser';
+            $action = 'WSEditUser';
           }
           // Make call
           $user = chamilo_soap_call('registration', $action, array(
@@ -211,7 +211,7 @@ function chamilo_user($op, &$edit, &$account, $category = NULL) {
             $chamilo_account = chamilo_soap_call('user_manager', 'DokeosWSUserInfoFromUsername', array('name' => $edit['name']));
             // Deterimine wether to Create or Override account at chamilo
             if (isset($chamilo_account->firstName) ? $chamilo_account->username == '' : FALSE) {
-              $action = 'DokeosWSCreateUser';
+              $action = 'WSCreateUser';
             }
             else {
               $action = 'DokeosWSUpdateUser';
