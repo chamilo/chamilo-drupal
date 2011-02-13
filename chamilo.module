@@ -501,3 +501,13 @@ function chamilo_get_service_path($service) {
     return chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/'. $service .'.soap.php?wsdl';
   }
 }
+/**
+ * Add some help on admin config page
+ */
+function chamilo_help($path, $arg) {
+  switch ($path) {
+    //Admin page help
+    case 'admin/settings/chamilo';
+      return '<p>' . t('Setting the information in this form will allow your Drupal site to connect to Chamilo and query some information about the courses available in the virtual campus. Please read the examples below the box, they will certainly help you. Once you have configured this form, you will need to add some of the predefined Chamilo blocks to some of your pages to see the results.') . '</p>';
+  }
+}
