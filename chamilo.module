@@ -349,7 +349,8 @@ function chamilo_block($op = 'list', $delta = 0, $edit = array()) {
             }
           }
           $visibilities = implode(',', $chamilo_courses_block_items);
-          $courses = $client->DokeosWSCourseList($chamilo_user, $signature, $visibilities);
+          // updated to Chamilo 1.8.8 service name - breaks 1.8.6 and 1.8.7 integration
+          $courses = $client->WSCourseList($chamilo_user, $signature, $visibilities);
           $data['content'] = theme_chamilo_course_list($courses);
           break;
         case 1:
