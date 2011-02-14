@@ -298,7 +298,7 @@ function chamilo_menu() {
   return $items;
 }
 
-function chamilo_get_signature($type = CHAMILO_GLOBAL_SIGNATURE) {
+function chamilo_get_signature($type = CHAMILO_GLOBAL_SIGNATURE, $method = 1) {
   global $user;
 
   switch ($type) {
@@ -308,7 +308,17 @@ function chamilo_get_signature($type = CHAMILO_GLOBAL_SIGNATURE) {
     case CHAMILO_GLOBAL_SIGNATURE:
       $chamilo_user = variable_get('chamilo_user', '');
       $chamilo_apikey = variable_get('chamilo_appkey', '');
-      return sha1($chamilo_user . $chamilo_apikey);
+      if ($method == 2) {
+        $chamilo_server = variable_get('chamilo_server', '');
+        $path = chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/testip.php';
+        //this requires having the allow_url_fopen = on, but so does 
+        // the webservice anyway
+        $list = file($path);
+        $ip = $list[0];
+        return sha1( $ip . $chamilo_apikey);
+      } else {
+        return sha1($chamilo_user . $chamilo_apikey);
+      }
     default:
       return '';
   }
@@ -336,6 +346,23 @@ function chamilo_block($op = 'list', $delta = 0, $edit = array()) {
       }
       switch ($delta) {
         case 0:
+          $signature = chamilo_get_signature(CHAMILO_GLOBAL_SIGNATURE,2);
+          $service = chamilo_get_service_path('',2);
+          $client = new SoapClient($service);
+          $data['subject'] = t('Chamilo trainings');
+          $chamilo_courses_block_items = variable_get('chamilo_courses_block_items', array('public'));
+          foreach ($chamilo_courses_block_items as $key => $item) {
+            if ($item === 0) {
+              unset($chamilo_courses_block_items[$key]);
+            }
+          }
+          $visibilities = implode(',', $chamilo_courses_block_items);
+          // updated to Chamilo 1.8.8 service name - breaks 1.8.6 and 1.8.7 integration
+          $courses = $client->{'WSCourse.ListCourses'}($signature, 'chamilo_course_id',$visibilities);
+          $data['content'] = theme_chamilo_course_list($courses);
+          
+          // -----------
+/*
           $signature = chamilo_get_signature();
           $chamilo_user = variable_get('chamilo_user', '');
           $service = chamilo_get_service_path('courses_list');
@@ -352,7 +379,7 @@ function chamilo_block($op = 'list', $delta = 0, $edit = array()) {
           // updated to Chamilo 1.8.8 service name - breaks 1.8.6 and 1.8.7 integration
           $courses = $client->WSCourseList($chamilo_user, $signature, $visibilities);
           $data['content'] = theme_chamilo_course_list($courses);
-          break;
+*/          break;
         case 1:
           chamilo_load_user_data($user);
           $signature = chamilo_get_signature(CHAMILO_PERUSER_SIGNATURE);
@@ -424,11 +451,13 @@ function theme_chamilo_course_list($courses) {
   if (!is_array($courses)) return;
   if (count($courses)) {
     drupal_add_css(drupal_get_path('module', 'chamilo') .'/chamilo.css', 'module', 'all', FALSE);
+    $chamilo_server = variable_get('chamilo_server', '');
+    $path = chamilo_sso_protocol(). $chamilo_server . '/main/course_home/course_home.php?cidReq=';
     ob_start();
     ?><ul><?php
     foreach ($courses as $course) {
 ?><li class="chamilo-course">
-<span class="chamilo-course-title"><a href="<?php print $course->url ?>"><?php print $course->title ?></a></span>
+<span class="chamilo-course-title"><a href="<?php print $path.$course->code ?>"><?php print $course->title ?></a></span>
 <span class="chamilo-course-info"><?php print $course->language .' - '. $course->teacher?></span>
 </li><?php
     }
@@ -492,11 +521,14 @@ function chamilo_agenda_time_frame($optional = FALSE) {
 /**
  * Given a $service name, return corresponding location and uri into an array.
  */
-function chamilo_get_service_path($service) {
+function chamilo_get_service_path($service, $algo = 1) {
   static $services;
   $chamilo_server = variable_get('chamilo_server', '');
   if (!isset($services)) {
     $services = array('courses_list', 'user_info', 'registration');
+  }
+  if (empty($service) && $algo == 2) {
+      return chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/soap.php?wsdl';
   }
   if (in_array($service, $services)) {
     return chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/'. $service .'.soap.php?wsdl';
