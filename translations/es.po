@@ -1,4 +1,3 @@
-# $Id$
 #
 # Spanish translation of Drupal (chamilo.module)
 # Copyright 2009 Fernando Paredes García <fernando@develcuy.com>
