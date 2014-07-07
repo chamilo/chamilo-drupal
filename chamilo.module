@@ -189,6 +189,14 @@ function chamilo_form_user_profile_form_alter(&$form, &$form_state, $form_id) {
           '#options' => chamilo_agenda_time_frame(TRUE),
         );
       }
+    }else {
+        $form['chamilo_settings']['duser'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Chamilo username'),
+          '#default_value' => $entity->chamilo_settings['user'],
+          '#description' => t('You do not have the right permissions to update these account details. If you think this is a mistake, please contact your administrator and ask to be allowed to connect to your own Chamilo account.'),
+          '#disabled' => true,
+        );
     }
   }
 }
