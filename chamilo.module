@@ -519,7 +519,7 @@ function chamilo_block_view($delta = '') {
       $courses = $client->WSCourseList($chamilo_user, $signature, $visibilities);
       $block = array(
         'subject' => t('Chamilo trainings'),
-        'content' => theme('chamilo_course_list', $courses),
+        'content' => theme('chamilo_course_list', $courses, $limit = 10), // change the limit here to show more
       );
       break;
 
@@ -604,21 +604,28 @@ function chamilo_theme($existing, $type, $theme, $path) {
  * Prepare courses list
  * @param   Array
  *    A list of course details as returned by chamilo_curl_exec()
+ * @param int
+ *    Limit for the number of courses to be shown
  */
-function theme_chamilo_course_list($courses) {
+function theme_chamilo_course_list($courses, $limit = 10) {
   if (!is_array($courses)) return;
   if (count($courses)) {
     drupal_add_css(drupal_get_path('module', 'chamilo') .'/chamilo.css', 'module', 'all', FALSE);
     ob_start();
+    $i = 0;
     ?><ul><?php
+    // Limit the list to 10 (or any other limit) courses, otherwise it starts to get very messy
     foreach ($courses as $course) {
+        if ($i >= $limit) { break; }
 ?><li class="chamilo-course">
-<span class="chamilo-course-title"><a href="<?php print $course->url ?>"><?php print $course->title ?></a></span>
-<span class="chamilo-course-info"><?php print $course->language .' - '. $course->teacher?></span>
+<span class="chamilo-course-title"><a href="<?php print $course->url ?>"><?php print utf8_decode($course->title) ?></a></span>
+<span class="chamilo-course-info"><?php print utf8_decode($course->language).(empty($course->teacher)?'':' - '.utf8_decode($course->teacher)) ?></span>
 </li><?php
+        $i++;
     }
     ?></ul><?php
-    $output = ob_get_contents(); ob_end_clean();
+    $output = ob_get_contents();
+    ob_end_clean();
     return $output;
   }
 }
@@ -630,8 +637,8 @@ function theme_chamilo_user_agenda_list($agenda_items) {
   $output = '';
   $agenda = array('items' => array());
   foreach ($agenda_items as $item) {
-    $html = '<span class="chamilo-event-title">'. l($item->title, $item->link) .'</span>';
-    $html .= '<span class="chamilo-event-info">'. $item->coursetitle .'</span>';
+    $html = '<span class="chamilo-event-title">'. l(utf8_decode($item->title), $item->link) .'</span>';
+    $html .= '<span class="chamilo-event-info">'. utf8_decode($item->coursetitle) .'</span>';
     $html .= '<span class="chamilo-event-info">'. date('M j, Y, g:i a', strtotime($item->datestart)) .'</span>';
     $html .= '<span class="chamilo-event-info">'. date('M j, Y, g:i a', strtotime($item->dateend)) .'</span>';
     $agenda['items'][] = $html;
