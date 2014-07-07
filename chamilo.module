@@ -1,10 +1,8 @@
 <?php
-
 /**
  * @file
- * Integration with Chamilo
+ * Integration with Chamilo for SSO and information blocks
  */
-
 // Base URL
 define('CHAMILO_BASE_URL', '/main/webservices');
 // Base API KEY URL
