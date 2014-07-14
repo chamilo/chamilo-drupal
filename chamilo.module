@@ -456,7 +456,7 @@ function chamilo_get_signature($type = CHAMILO_GLOBAL_SIGNATURE) {
       }
       break;
      case CHAMILO_SECRET_KEY:
-         $chamilo_apikey = sha1($_SERVER['REMOTE_ADDR'] . variable_get('chamilo_appkey', ''));
+         $chamilo_apikey = sha1($_SERVER['SERVER_ADDR'] . variable_get('chamilo_appkey', ''));
          return $chamilo_apikey;
      break;
     default:
