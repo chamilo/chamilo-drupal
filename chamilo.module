@@ -267,15 +267,17 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
         );
         // Check as chamilo account
         $chamilo_account = chamilo_soap_call('registration', 'WSGetUserFromUsername', $params);
-        // Deterimine wether to Create or Override account at Chamilo
+        $fname = (isset($edit['field_first_name']['und'][0]['value'])?$edit['field_first_name']['und'][0]['value']:'');
+        $lname = (isset($edit['field_last_name']['und'][0]['value'])?$edit['field_last_name']['und'][0]['value']:'');
+        // Determine wether to Create or Override account at Chamilo
         if (empty($chamilo_account->user_id)) {
             $params = array(
                 'loginname' => $edit['name'],
                 'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
                 'password_crypted' => 1,
                 'email' => $edit['mail'],
-                'firstname' => '',
-                'lastname' => '',
+                'firstname' => $fname,
+                'lastname' => $lname,
                 'language' => '',
                 'phone' => '',
                 'expiration_date' => '',
@@ -320,6 +322,8 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
     if (!isset($edit['chamilo_settings']['sync_account']) && ($sync_access || $admin_access)) {
       $users = variable_get('chamilo_accounts', array());
       if (!is_array($users)) { $users = array(); }
+      $fname = (isset($edit['field_first_name']['und'][0]['value'])?$edit['field_first_name']['und'][0]['value']:'');
+      $lname = (isset($edit['field_last_name']['und'][0]['value'])?$edit['field_last_name']['und'][0]['value']:'');
       // Sync account
       if ($edit['chamilo_settings']['sync_account']) {
         // Check as chamilo account
@@ -333,8 +337,12 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
         }
         // Make call
         $user = chamilo_soap_call('user_manager', $action, array(
-          'loginname' => $edit['name'], 'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
-          'password_crypted' => 1, 'email' => $edit['mail'],
+          'loginname' => $edit['name'], 
+          'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
+          'password_crypted' => 1,
+          'email' => $edit['mail'],
+          'firstname' => $fname,
+          'lastname' => $lname,
         ));
         // Save
         if (!isset($users[$account->uid])) {
