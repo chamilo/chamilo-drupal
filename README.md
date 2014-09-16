@@ -19,6 +19,9 @@ To enable the Single Sign On, you should:
   you define a domain for the sso_authentication_domain parameter,
   because otherwise loading the main page of your portal will result in
   an ugly error
+- it is possible that you would also need to insert the following into the
+  settings_current table (this has to be verified):
+    INSERT INTO settings_current (variable, subkey, type, category, selected_value, title, comment, scope, subkeytext) VALUES ('sso_authentication_subclass',NULL,'textfield','Security','Drupal','SSOAuthSubClassTitle','SSOAuthSubClassComment',NULL,NULL);
 
 This should work (it requires accounts on Drupal to be created with the
 same username as in Chamilo)
