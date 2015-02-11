@@ -25,10 +25,10 @@ function chamilo_admin_settings_form() {
     '#description' => t('NOTICE: Do NOT use trailing slash nor http://. i.e: yourchamilosite.com'),
     '#default_value' => variable_get('chamilo_server', ''),
   );
-  $form['chamilo_accounts'] = array(
+  $form['sync_chamilo_accounts'] = array(
     '#type' => 'checkbox',
     '#title' => t('Sync with chamilo accounts.'),
-    '#default_value' => variable_get('chamilo_accounts'),
+    '#default_value' => variable_get('sync_chamilo_accounts'),
     '#description' => t('If enabled, system will create or override chamilo accounts with same username, email and password.')
   );
   $form['chamilo_courses_block_items'] = array(
