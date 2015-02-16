@@ -81,7 +81,6 @@ function chamilo_soap_call() {
   ini_set('soap.wsdl_cache_enabled', 0);
   // Init SOAP client
   $service_path = chamilo_get_service_path($service);
-  
   if ($service_path) {
     $client = new SoapClient($service_path);    
     // Make call and its return result
@@ -294,12 +293,12 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
             $user = chamilo_soap_call('registration', 'WSCreateUser', $params);
 
             // Save
-            if (!isset($users[$account->uid])) {
-              $users[$account->uid] = $account->uid;
-              variable_set('chamilo_accounts', $users);
-            }
+//            if (!isset($users[$account->uid])) {
+//              $users[$account->uid] = $account->uid;
+//              variable_set('chamilo_accounts', $users);
+//            }
             drupal_set_message('User succesfully syncronized with Chamilo.');
-        }        
+        }
       }
     if ($connect_access || $admin_access) {
       chamilo_save_user_data($edit, $account, $category);
@@ -684,7 +683,7 @@ function chamilo_permission() {
     'connect with own Chamilo account' => array(
       'title' => t('connect with own Chamilo account'),
       'description' => t('Access to SSO and user blocks.'),
-    ),
+    )
   );
 }
 
@@ -728,4 +727,42 @@ function chamilo_get_service_path($service) {
   if (in_array($service, $services)) {
     return chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/'. $service .'.soap.php?wsdl';
   }
+}
+
+function chamilo_get_certificates($startingDate = '', $endingDate = '') {
+    $certificates = chamilo_soap_call('registration', 'WSCertificatesList', $startingDate, $endingDate);
+    $chamiloUserNames = array_map(
+        function($certificate) {
+            return $certificate->username;
+        },
+        $certificates
+    );
+    $chamiloUserNames = "'".implode("','", $chamiloUserNames)."'";
+    $users = db_query('SELECT uid,name FROM {users} WHERE name IN ('.$chamiloUserNames.')');
+    $namesUids = array();
+    foreach ($users as $user) {
+        $namesUids[$user->name] = $user->uid;
+    }
+    if (empty($namesUids)) {
+        return array();
+    }
+    $drupalCertificates = array();
+    $values = "";
+    foreach ($certificates as $certificate) {
+        if (array_key_exists($certificate->username, $namesUids)) {
+            $values .= "(" . $certificate->id . ",";
+            $values .= "'" . $certificate->cat_id . "',";
+            $values .= "'" . $certificate->course_code . "',";
+            $certificate->session_id = (!isset($certificate->session_id) ? "NULL" : $certificate->session_id);
+            $values .= $certificate->session_id . ",";
+            $values .= $namesUids[$certificate->username] . ",";
+            $values .= "'" . $certificate->created_at . "',";
+            $values .= "'" . $certificate->path_certificate . "'),";
+            array_push($drupalCertificates, $certificate);
+        }
+    }
+    $values = rtrim($values, ",");
+    $values .= ' ON DUPLICATE KEY UPDATE certificate_id=certificate_id;';
+    db_query('INSERT INTO chamilo_certificate VALUES ' . $values);
+    return $drupalCertificates;
 }
