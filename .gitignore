@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Ignore configuration files that may contain sensitive information.
 sites/*/*settings*.php
 
@@ -34,3 +35,10 @@ xmlrpc.php
 /profiles
 /scripts
 /themes
+=======
+ctools
+entity
+rules
+ubercart
+views
+>>>>>>> 60e4b22754e054f1d39d2fc67c83b0022a26ad94
