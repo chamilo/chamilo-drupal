@@ -729,3 +729,41 @@ function chamilo_get_service_path($service) {
     return chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/'. $service .'.soap.php?wsdl';
   }
 }
+
+function chamilo_get_certificates($startingDate = '', $endingDate = '') {
+    $certificates = chamilo_soap_call('registration', 'WSCertificatesList', $startingDate, $endingDate);
+    $chamiloUserNames = array_map(
+        function($certificate) {
+            return $certificate->username;
+        },
+        $certificates
+    );
+    $chamiloUserNames = "'".implode("','", $chamiloUserNames)."'";
+    $users = db_query('SELECT uid,name FROM {users} WHERE name IN ('.$chamiloUserNames.')');
+    $namesUids = array();
+    foreach ($users as $user) {
+        $namesUids[$user->name] = $user->uid;
+    }
+    if (empty($namesUids)) {
+        return array();
+    }
+    $drupalCertificates = array();
+    $values = "";
+    foreach ($certificates as $certificate) {
+        if (array_key_exists($certificate->username, $namesUids)) {
+            $values .= "(" . $certificate->id . ",";
+            $values .= "'" . $certificate->cat_id . "',";
+            $values .= "'" . $certificate->course_code . "',";
+            $certificate->session_id = (!isset($certificate->session_id) ? "NULL" : $certificate->session_id);
+            $values .= $certificate->session_id . ",";
+            $values .= $namesUids[$certificate->username] . ",";
+            $values .= "'" . $certificate->created_at . "',";
+            $values .= "'" . $certificate->path_certificate . "'),";
+            array_push($drupalCertificates, $certificate);
+        }
+    }
+    $values = rtrim($values, ",");
+    $values .= ' ON DUPLICATE KEY UPDATE certificate_id=certificate_id;';
+    db_query('INSERT INTO chamilo_certificate VALUES ' . $values);
+    return $drupalCertificates;
+}
