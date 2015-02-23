@@ -27,15 +27,6 @@ function chamilo_boot() {
 }
 
 /**
-* Implementation of hook_views_api().
-*/
-function chamilo_views_api() {
-   return array(
-     'api' => 3.0
-   );
-}
-
-/**
  * Returns the protocol used to connect to Chamilo
  * @return string 'http://' or 'https://', depending on variable stored in Chamilo module's config
  */
@@ -267,11 +258,10 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
   $connect_access = user_access('connect with own Chamilo account');
   $sync_access = user_access('sync users with Chamilo accounts');
   $users = array();
-//    if (!isset($edit['chamilo_settings']['sync_account']) && ($sync_access || $admin_access)) {
-        $sync_chamilo_accounts = variable_get('sync_chamilo_accounts', array());
-    if ($sync_chamilo_accounts && ($sync_access || $admin_access)) {
-//        $users = variable_get('chamilo_accounts', array());
-//        if (!is_array($users)) { $users = array(); }
+  $sync_chamilo_accounts = variable_get('sync_chamilo_accounts', array());
+  if ($sync_chamilo_accounts && ($sync_access || $admin_access)) {
+        $users = variable_get('chamilo_accounts', array());
+        if (!is_array($users)) { $users = array(); }
         $params = array(
                 'username' => $edit['name'],
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
@@ -304,18 +294,12 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
             $user = chamilo_soap_call('registration', 'WSCreateUser', $params);
 
             // Save
-//            if (!isset($users[$account->uid])) {
-//              $users[$account->uid] = $account->uid;
-//              variable_set('chamilo_accounts', $users);
-//            }
+            if (!isset($users[$account->uid])) {
+              $users[$account->uid] = $account->uid;
+              variable_set('chamilo_accounts', $users);
+            }
             drupal_set_message('User succesfully syncronized with Chamilo.');
         }        
-//      } else { // Unlink account
-        // Save
-//        if (isset($users[$account->uid])) {
-//          unset($users[$account->uid]);
-//          variable_set('chamilo_accounts', $users);
-//        }
       }
     if ($connect_access || $admin_access) {
       chamilo_save_user_data($edit, $account, $category);
@@ -330,44 +314,22 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
   $admin_access = user_access('administer chamilo');
   $connect_access = user_access('connect with own Chamilo account');
   $sync_access = user_access('sync users with Chamilo accounts');
-// FIX it has $category==account when editing the account tab and chamilo when editing chamilo's setting tab, so in both case we need to run the update i think 
-// if ($category == 'chamilo') {
-//    if (!isset($edit['chamilo_settings']['sync_account']) && ($sync_access || $admin_access)) {
-
-    $sync_chamilo_accounts = variable_get('sync_chamilo_accounts', array()); 
-    if ($sync_chamilo_accounts && ($sync_access || $admin_access)) {
-//      $users = variable_get('chamilo_accounts', array());
-//      if (!is_array($users)) { $users = array(); }
+  $sync_chamilo_accounts = variable_get('sync_chamilo_accounts', array());
+  if ($sync_chamilo_accounts && ($sync_access || $admin_access)) {
+      $users = variable_get('chamilo_accounts', array());
+      if (!is_array($users)) { $users = array(); }
       $fname = (isset($edit['field_first_name']['und'][0]['value'])?$edit['field_first_name']['und'][0]['value']:'');
       $lname = (isset($edit['field_last_name']['und'][0]['value'])?$edit['field_last_name']['und'][0]['value']:'');
       // Sync account
-// FIX  ['chamilo_settings']['sync_account'] is not included in the user form so it's never set
-// FIX in chamilo.admin.inc there is $form['chamilo_accounts'] that correspond to it but if it's set it works once and then it is disabled, I don know why. To get the value  variable_get('chamilo_accounts');
-//      if ($edit['chamilo_settings']['sync_account']) {
-
-//      if (!$edit['chamilo_settings']['sync_account']) {
-        // Check as chamilo account
-//        $chamilo_account = chamilo_soap_call('user_manager', 'WSGetUserFromUsername', array('username' => $edit['name']));
+      // Check as chamilo account
         $params = array(
                 'username' => $edit['name'],
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
         );
         $chamilo_account = chamilo_soap_call('registration', 'WSGetUserFromUsername', $params);
-//old version that was not working        
-        // Deterimine wether to Create or Override account at Chamilo
-//        if (isset($chamilo_account->firstName) ? $chamilo_account->username == '' : FALSE) {
-//          $action = 'WSCreateUser';
-//        }
-//        else {
-//          $action = 'WSEditUser';
-//        }
-
-
         // get user's picture URL
         $file = file_load($account->picture);
         $picture_url = file_create_url($file->uri);
-
-
         // Deterimine wether to Create or update account at Chamilo
         if (isset($chamilo_account->user_id) ? $chamilo_account->user_id != '' : FALSE) {
           // Update update
@@ -409,49 +371,16 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
           $user = chamilo_soap_call('registration', 'WSCreateUser', $params);
         }
 
-        // Make call
-//        $user = chamilo_soap_call('user_manager', $action, array(
-//        $user = chamilo_soap_call('registration', $action, array(
-//          'original_user_id_value' => $account->uid,
-//          'original_user_id_name' => 'drupal_user_id',
-//          'firstname' => $fname,
-//          'lastname' => $lname,
-//          'username' => $edit['name'],
-//          'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
-//          'email' => $edit['mail'],
-//          'status' => null,
-//          'phone' => null,
-//          'expiration_date' => null,
-//          'extra' => null,
-//          'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
-
-//          'loginname' => $edit['name'], 
-//          'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
-//          'password_crypted' => 1,
-//          'email' => $edit['mail'],
-//          'firstname' => $fname,
-//          'lastname' => $lname,
-//        ));
         // Save
-//        if (!isset($users[$account->uid])) {
-//          $users[$account->uid] = $account->uid;
-//          variable_set('chamilo_accounts', $users);
-//        }
+        if (!isset($users[$account->uid])) {
+          $users[$account->uid] = $account->uid;
+          variable_set('chamilo_accounts', $users);
+        }
         drupal_set_message('User succesfully syncronized with Chamilo.');
-      }
-      // Unlink account
-//      else {
-        // Save
-//        if (isset($users[$account->uid])) {
-//          unset($users[$account->uid]);
-//          variable_set('chamilo_accounts', $users);
-//        }
-//      }
-//    }
+    }
     if ($connect_access || $admin_access) {
       chamilo_save_user_data($edit, $account, $category);
     }
-//  }
 }
 
 /**
@@ -510,14 +439,14 @@ function chamilo_save_user_data(&$edit, &$account, $category, $register = FALSE)
     ->execute();
 
   if ($save_data) {
-    $edit_chamilo_user = (object)array(
+    $edit = (object)array(
       'user_id' => $account->uid,
       'duser' => $data['duser'],
       'apikey' => $data['apikey'],
       'course_visibility' => $data['course_visibility'],
       'agenda_time_frame' => $data['agenda_time_frame'],
     );
-    drupal_write_record('chamilo_user', $edit_chamilo_user);
+    drupal_write_record('chamilo_user', $edit);
   }
 }
 
@@ -548,7 +477,7 @@ function chamilo_menu() {
     'page callback' => 'chamilo_close_course_ajax_detail',
     'access arguments' => array('access content'),
     'file' => 'chamilo_course_detail_ajax.inc',
-  ); 
+  );
 
   return $items;
 }
@@ -710,9 +639,6 @@ function chamilo_theme($existing, $type, $theme, $path) {
     'chamilo_course_list' => array(
       'arguments' => array('courses' => NULL),
     ),
-    'chamilo_course_detail_ajax' => array(
-      'template' => 'chamilo-course-detail-ajax',
-    ),
   );
 }
 
@@ -775,10 +701,6 @@ function chamilo_permission() {
     'connect with own Chamilo account' => array(
       'title' => t('connect with own Chamilo account'),
       'description' => t('Access to SSO and user blocks.'),
-    ),
-    'sync users with Chamilo accounts' => array(
-      'title' => t('sync users with Chamilo accounts'),
-      'description' => t('Let user synchronize users with Chamilo accounts.'),
     ),
   );
 }
