@@ -756,36 +756,40 @@ function chamilo_get_service_path($service) {
 
 /**
  * getArea (returns the area field from a given drupal user id)
- * @param string Drupal user id
- * @return array Profile area field
+ * @param   string  Drupal user id
+ * @return  array  Profile area field
  */
 function getArea($drupalUserId) {
+    $area = array(
+        'field_name' => 'area',
+        'field_value' => '-'
+    );
     $query = "SELECT field_user_belongs_to_tid FROM field_data_field_user_belongs_to
-        WHERE entity_id = '$drupalUserId' LIMIT 1";
-    $belongsToResult = db_query($query);
-    $belongsTo = null;
-    foreach ($belongsToResult as $value) {
-        $belongsTo = $value->field_user_belongs_to_tid;
+          WHERE entity_id = '$drupalUserId' LIMIT 1";
+    $resultSet = db_query($query);
+    $result = 0;
+    foreach ($resultSet as $value) {
+        $result = $value->field_user_belongs_to_tid;
+    }
+    if (!$result) {
+        return $area;
     }
     // Maximum of iterations allowed in case of disastrous cyclical hierarchy
     $iterations = 3;
-    $parent = $belongsTo;
-    $area = "";
+    $areaText = '';
     do {
         $iterations--;
-        $query = "SELECT name FROM taxonomy_term_data WHERE tid = $parent LIMIT 1";
-        $areaResult = db_query($query);
-        foreach ($areaResult as $value) {
-            $area = empty($area) ? $value->name : $value->name." > ".$area;
+        $query = "SELECT name FROM taxonomy_term_data WHERE tid = $result LIMIT 1";
+        $resultSet = db_query($query);
+        foreach ($resultSet as $value) {
+            $areaText = empty($areaText) ? $value->name : $value->name . " > " . $areaText;
         }
-        $query = "SELECT parent FROM taxonomy_term_hierarchy WHERE tid = $parent LIMIT 1";
-        $parentResult = db_query($query);
-        foreach ($parentResult as $value) {
-            $parent = $value->parent;
+        $query = "SELECT parent FROM taxonomy_term_hierarchy WHERE tid = $result LIMIT 1";
+        $resultSet = db_query($query);
+        foreach ($resultSet as $value) {
+            $result = $value->parent;
         }
-    } while ($parent && $iterations);
-    return array(
-        'field_name' => 'area',
-        'field_value' => $area
-    );
+    } while ($result && $iterations);
+    $area['field_value'] = utf8_encode($areaText);
+    return $area;
 }
