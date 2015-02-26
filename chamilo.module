@@ -462,6 +462,23 @@ function chamilo_menu() {
     'access arguments' => array('administer chamilo'),
     'file' => 'chamilo.admin.inc',
   );
+
+  $items['course-detail-ajax'] = array( 
+    'title' => t('Ajax chamilo course detail'),
+    'description' => t('When you click on "Ver detalle" shows a detailed block course.'),
+    'page callback' => 'chamilo_course_ajax_detail',
+    'access arguments' => array('access content'),
+    'file' => 'chamilo_course_detail_ajax.inc',
+  ); 
+
+  $items['close-course-detail-ajax'] = array( 
+    'title' => t('Close ajax chamilo course detail'),
+    'description' => t('When you click on "Cerrar detalle" hidden a detailed block course.'),
+    'page callback' => 'chamilo_close_course_ajax_detail',
+    'access arguments' => array('access content'),
+    'file' => 'chamilo_course_detail_ajax.inc',
+  );
+
   return $items;
 }
 
