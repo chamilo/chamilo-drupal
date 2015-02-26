@@ -285,7 +285,9 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
                 'expiration_date' => '',
                 'original_user_id_name' => 'drupal_user_id',
                 'original_user_id_value' => $account->uid,
-                'extra' => '',
+                'extra' => array(
+                    getArea($account->uid)
+                ),
                 'active' => '1',
                 'status' => '1',
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
@@ -330,6 +332,7 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
         // get user's picture URL
         $file = file_load($account->picture);
         $picture_url = file_create_url($file->uri);
+        $area = getArea($account->uid);
         // Deterimine wether to Create or update account at Chamilo
         if (isset($chamilo_account->user_id) ? $chamilo_account->user_id != '' : FALSE) {
           // Update update
@@ -344,7 +347,9 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
                 'status' => null,
                 'phone' => null,
                 'expiration_date' => null,
-                'extra' => null,
+                'extra' => array(
+                    $area
+                ),
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
                 'picture_url' => $picture_url,
             );
@@ -363,7 +368,9 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
                 'expiration_date' => '',
                 'original_user_id_name' => 'drupal_user_id',
                 'original_user_id_value' => $account->uid,
-                'extra' => '',
+                'extra' => array(
+                    $area
+                ),
                 'active' => '1',
                 'status' => '1',
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
@@ -728,4 +735,40 @@ function chamilo_get_service_path($service) {
   if (in_array($service, $services)) {
     return chamilo_sso_protocol(). $chamilo_server . CHAMILO_BASE_URL .'/'. $service .'.soap.php?wsdl';
   }
+}
+
+/**
+ * getArea (returns the area field from a given drupal user id)
+ * @param   string  Drupal user id
+ * @return  array  Profile area field
+ */
+function getArea($drupalUserId) {
+    $query = "SELECT field_user_belongs_to_tid FROM field_data_field_user_belongs_to
+          WHERE entity_id = '$drupalUserId' LIMIT 1";
+    $belongsToResult = db_query($query);
+    $belongsTo = null;
+    foreach ($belongsToResult as $value) {
+        $belongsTo = $value->field_user_belongs_to_tid;
+    }
+    // Maximum of iterations allowed in case of disastrous cyclical hierarchy
+    $iterations = 3;
+    $parent = $belongsTo;
+    $area = "";
+    do {
+        $iterations--;
+        $query = "SELECT name FROM taxonomy_term_data WHERE tid = $parent LIMIT 1";
+        $areaResult = db_query($query);
+        foreach ($areaResult as $value) {
+            $area = empty($area) ? $value->name : $value->name." > ".$area;
+        }
+        $query = "SELECT parent FROM taxonomy_term_hierarchy WHERE tid = $parent LIMIT 1";
+        $parentResult = db_query($query);
+        foreach ($parentResult as $value) {
+            $parent = $value->parent;
+        }
+    } while ($parent && $iterations);
+    return array(
+        'field_name' => 'area',
+        'field_value' => $area
+    );
 }
