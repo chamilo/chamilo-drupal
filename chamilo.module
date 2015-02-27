@@ -479,6 +479,14 @@ function chamilo_menu() {
     'file' => 'chamilo_course_detail_ajax.inc',
   );
 
+  $items['buscar-curso'] = array( 
+    'title' => t('Search course'),
+    'description' => t('This page shows the result of the search for a course.'),
+    'page callback' => 'chamilo_search_course',
+    'access arguments' => array('access content'),
+    'file' => 'chamilo_search_course.inc',
+  );
+
   return $items;
 }
 

@@ -1,9 +1,12 @@
+<div class="ajax-container-close">
+  <a href="<?php print base_path(); ?>close-course-detail-ajax/nojs/<?php print $course_id; ?>" class="use-ajax">Cerrar detalle</a>
+</div>
 <div class="cb-inner-container-left"> 
   <ul> 
     <li class="clearfix">
       <strong>Id:</strong>
       <p>
-        <?php print $output->id; ?>
+        <?php print $output->code; ?>
       </p>
     </li>
     <li class="clearfix">
@@ -37,14 +40,18 @@
         <?php print $output->duration; ?>
       </p>
     </li>
+    <?php if(!empty($output->banner)): ?>
     <li class="clearfix">
       <img src="<?php print $output->banner; ?>" />
     </li>
+    <?php endif; ?>
   </ul> 
 </div>
 <div class="cb-inner-container-middle">
-  <p><?php print $output->as_description; ?></p>
+  <p><?php print $output->description; ?></p>
+  <?php if(!empty($output->brochure)): ?>
   <a href="<?php print $output->brochure; ?>" class="download-link" donwload>Descargar brochure</a>
+  <?php endif; ?>
 </div>
 <div class="cb-inner-container-right">
   <?php if ($output->status == -1): ?>

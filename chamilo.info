@@ -9,8 +9,7 @@ files[] = chamilo.install
 files[] = handlers/chamilo_handler_field.inc
 files[] = plugins/chamilo_plugin_query.inc
 files[] = chamilo_course_detail_ajax.inc
-
-scripts[] = js/chamilo_course_detail_ajax.js
+files[] = chamilo_search_course.inc
 
 ; Information added by drupal.org packaging script on 2013-03-26
 version = "7.x-1.0-alpha2"
