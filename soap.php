@@ -84,21 +84,25 @@ class ChamiloConnector {
 
     /**
      * addUser (adds the user to Drupal if its username is available)
-     * @param   array User fields
-     * @param   array User extra fields
+     * @param   array       User fields
+     * @param   array       User extra fields
+     * @return  int|bool    User id. Returns false if failed
      */
     public function addUser($fields, $extraFields = null) {
         $this->defineConstants();
         $this->includeFiles();
         $this->setConnectionInfo();
+        $uid = false;
         // Save the user only if the username is available in Drupal
         if (!user_load_by_name($fields['name'])) {
             if (!is_null($extraFields)) {
                 $extraFields = $this->getExistingUserExtraFields($extraFields);
                 $fields = array_merge($fields, $extraFields);
             }
-            user_save(new StdClass(), $fields);
+            $user = user_save(new StdClass(), $fields);
+            $uid = $user->uid;
         }
+        return $uid;
     }
 
     /**
