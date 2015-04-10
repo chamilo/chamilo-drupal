@@ -249,6 +249,26 @@ function chamilo_user_load($users) {
 }
 */
 
+/**
+ * Implementation of hook_user_logout()
+ * Called when the user just logged out
+ * Note that the user might have gotten here after logging out from Chamilo in
+ * the first place, so we launch the logout procedure through a redirect
+ * to Chamilo's logout (which in turn returns the browser to this Drupal site).
+ * At this point, we just add a cookie that will persist up to the logout
+ * confirmation screen, then we call a JS redirect (see chamilo_block_view())
+ * In order for this mechanism to work, you need to put the (invisible)
+ * "Chamilo logout" block into an active region so it's visible at least from
+ * the front page (where you finally get when logging out)
+ * @param   object  $account    User account
+ */
+function chamilo_user_logout($account) {
+  if (!empty($account->uid)) {
+    $path = chamilo_sso_protocol().variable_get('chamilo_server', '').'/index.php?logout=logout&no_redirect=1';
+    user_cookie_save(array('chamilo_logout_requested' => $path));
+  }
+}
+
 
 /**
  * Implementation of hook_user_insert().
@@ -540,6 +560,10 @@ function chamilo_block_info() {
     'info' => t('My Chamilo courses'),
     'weight' => 0,
   );
+  $blocks['user_logout'] = array(
+    'info' => t('Logout from Chamilo'),
+    'weight' => 0,
+  );
   return $blocks;
 }
 
@@ -607,6 +631,12 @@ function chamilo_block_view($delta = '') {
           'subject' => t('My Chamilo Courses'),
           'content' => theme('chamilo_course_list', $agenda),
         );
+      }
+      break;
+    case 'user_logout':
+      if (!empty($_COOKIE['Drupal_visitor_chamilo_logout_requested'])) {
+        user_cookie_save(array('chamilo_logout_requested' => null));
+        drupal_add_js('(function ($) { $().ready(function(){ window.location.replace("'.$_COOKIE['Drupal_visitor_chamilo_logout_requested'].'");});})(jQuery)', 'inline');
       }
       break;
   }
