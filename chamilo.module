@@ -13,6 +13,10 @@ define('CHAMILO_DEFAULT_IPP', 10);
 define('CHAMILO_GLOBAL_SIGNATURE', 1);
 define('CHAMILO_PERUSER_SIGNATURE', 2);
 define('CHAMILO_SECRET_KEY', 3);
+// In case Drupal is on the same server as Chamilo, you might need to use this
+// setting. Set to '127.0.0.1' if Chamilo does not accept authentication
+define('CHAMILO_DRUPAL_VISIBLE_IP', '');
+
 
 /**
  * Implementation of hook_boot()
@@ -488,7 +492,8 @@ function chamilo_get_signature($type = CHAMILO_GLOBAL_SIGNATURE) {
       }
       break;
      case CHAMILO_SECRET_KEY:
-         $chamilo_apikey = sha1($_SERVER['SERVER_ADDR'] . variable_get('chamilo_appkey', ''));
+         $addr = (CHAMILO_DRUPAL_VISIBLE_IP == '' ? $_SERVER['SERVER_ADDR'] : CHAMILO_DRUPAL_VISIBLE_IP);
+         $chamilo_apikey = sha1($addr . variable_get('chamilo_appkey', ''));
          return $chamilo_apikey;
      break;
     default:
