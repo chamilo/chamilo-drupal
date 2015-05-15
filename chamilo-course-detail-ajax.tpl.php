@@ -58,32 +58,40 @@
     <a href="<?php print $output->action_url; ?>" class="session-register">Inscribirse</a>
   <?php endif; ?>
 
-  <?php if ($output->status == 0): ?>
+  <?php if ($output->status == 10): ?>
     <a href="<?php print $output->action_url; ?>" class="session-virtual-classroom">Ir aula virtual</a>
   <?php endif; ?>
 
   <?php if ($output->status == 1): ?>
-    <p class="session-message">
-      <?php print $output->message; ?>
-    </p>
+    <div class="session-message status-three">
+      <p class="session-message">
+        <?php print $output->message; ?>
+      </p>
+    </div>
   <?php endif; ?>
 
   <?php if ($output->status == 2): ?>
-    <p class="session-message">
-      <?php print $output->message; ?>
-    </p>
+    <div class="session-message status-two">
+      <p class="session-message">
+        <?php print $output->message; ?>
+      </p>
+    </div>
   <?php endif; ?>
 
   <?php if ($output->status == 3): ?>
-    <p class="session-message">
-      <?php print $output->message; ?>
-    </p>
+    <div class="session-message status-three">
+      <p class="session-message">
+        <?php print $output->message; ?>
+      </p>
+    </div>
   <?php endif; ?>
 
-  <?php if ($output->status == 10): ?>
-    <p class="session-message">
-      <?php print $output->message; ?>
-    </p>
+  <?php if ($output->status == 0): ?>
+    <div class="session-message status-one">
+      <p class="session-message">
+        <?php print $output->message; ?>
+      </p>
+    </div>
   <?php endif; ?>
 </div>
 

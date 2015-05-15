@@ -134,6 +134,27 @@ class ChamiloConnector {
         require_once DRUPAL_ROOT.'/sites/all/modules/chamilo/chamilo_course_detail_ajax.inc';
         return chamilo_percentage_full_user_profile($drupalUserId);
     }
+
+    /**
+     * Get the created user id
+     * @param string $name The user name
+     * @return int User id
+     */
+    public function getUserId($name)
+    {
+        $this->defineConstants();
+        $this->includeFiles();
+        $this->setConnectionInfo();
+
+        $user = user_load(array('name' => check_plain($name)));
+
+        if ($user === false || count($user) === 0) {
+            return false;
+        }
+
+        return $user->uid;
+    }
+
 }
 
 $server = new SoapServer(null, array('uri'=>'http://localhost/'));
