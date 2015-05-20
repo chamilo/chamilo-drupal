@@ -15,7 +15,7 @@ define('CHAMILO_PERUSER_SIGNATURE', 2);
 define('CHAMILO_SECRET_KEY', 3);
 // In case Drupal is on the same server as Chamilo, you might need to use this
 // setting. Set to '127.0.0.1' if Chamilo does not accept authentication
-define('CHAMILO_DRUPAL_VISIBLE_IP', '127.0.0.1');
+define('CHAMILO_DRUPAL_VISIBLE_IP', '');
 
 /**
  * Implementation of hook_boot()
