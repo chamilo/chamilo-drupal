@@ -13,6 +13,9 @@ define('CHAMILO_DEFAULT_IPP', 10);
 define('CHAMILO_GLOBAL_SIGNATURE', 1);
 define('CHAMILO_PERUSER_SIGNATURE', 2);
 define('CHAMILO_SECRET_KEY', 3);
+// In case Drupal is on the same server as Chamilo, you might need to use this
+// setting. Set to '127.0.0.1' if Chamilo does not accept authentication
+define('CHAMILO_DRUPAL_VISIBLE_IP', '127.0.0.1');
 
 /**
  * Implementation of hook_boot()
@@ -24,6 +27,15 @@ function chamilo_boot() {
   if ($user->uid && isset($_GET['sso_referer'])) {
     chamilo_sso_auth($user);
   }
+}
+
+/**
+* Implementation of hook_views_api().
+*/
+function chamilo_views_api() {
+   return array(
+     'api' => 3.0
+   );
 }
 
 /**
@@ -85,7 +97,13 @@ function chamilo_soap_call() {
   if ($service_path) {
     $client = new SoapClient($service_path);    
     // Make call and its return result
-    return $client->__soapCall($action, $params);
+    try {
+        $r = $client->__soapCall($action, $params);
+    } catch (Exception $e) {
+        error_log('In chamilo_soap_call, exception when calling: '.$e->getMessage());
+        return false;
+    }
+    return $r;
   } else {
     return FALSE;
   }
@@ -255,20 +273,13 @@ function chamilo_user_load($users) {
  * Note that the user might have gotten here after logging out from Chamilo in
  * the first place, so we launch the logout procedure through a redirect
  * to Chamilo's logout (which in turn returns the browser to this Drupal site).
- * At this point, we just add a cookie that will persist up to the logout
- * confirmation screen, then we call a JS redirect (see chamilo_block_view())
- * In order for this mechanism to work, you need to put the (invisible)
- * "Chamilo logout" block into an active region so it's visible at least from
- * the front page (where you finally get when logging out)
  * @param   object  $account    User account
  */
 function chamilo_user_logout($account) {
-  if (!empty($account->uid)) {
     $path = chamilo_sso_protocol().variable_get('chamilo_server', '').'/index.php?logout=logout&no_redirect=1';
-    user_cookie_save(array('chamilo_logout_requested' => $path));
-  }
+    session_destroy();
+    drupal_goto($path);
 }
-
 
 /**
  * Implementation of hook_user_insert().
@@ -302,11 +313,11 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
                 'lastname' => $lname,
                 'language' => '',
                 'phone' => '',
-                'expiration_date' => '',
+                'expiration_date' => null,
                 'original_user_id_name' => 'drupal_user_id',
                 'original_user_id_value' => $account->uid,
                 'extra' => array(
-                    getArea($account->uid)
+                    get_area($account->uid)
                 ),
                 'active' => '1',
                 'status' => '1',
@@ -322,6 +333,12 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
             }
             drupal_set_message('User succesfully syncronized with Chamilo.');
         }        
+//      } else { // Unlink account
+        // Save
+//        if (isset($users[$account->uid])) {
+//          unset($users[$account->uid]);
+//          variable_set('chamilo_accounts', $users);
+//        }
       }
     if ($connect_access || $admin_access) {
       chamilo_save_user_data($edit, $account, $category);
@@ -349,10 +366,20 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
         );
         $chamilo_account = chamilo_soap_call('registration', 'WSGetUserFromUsername', $params);
+//old version that was not working        
+        // Deterimine wether to Create or Override account at Chamilo
+//        if (isset($chamilo_account->firstName) ? $chamilo_account->username == '' : FALSE) {
+//          $action = 'WSCreateUser';
+//        }
+//        else {
+//          $action = 'WSEditUser';
+//        }
+
+
         // get user's picture URL
         $file = file_load($account->picture);
         $picture_url = file_create_url($file->uri);
-        $area = getArea($account->uid);
+        $area = get_area($account->uid);
         // Deterimine wether to Create or update account at Chamilo
         if (isset($chamilo_account->user_id) ? $chamilo_account->user_id != '' : FALSE) {
           // Update update
@@ -385,7 +412,7 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
                 'lastname' => $lname,
                 'language' => '',
                 'phone' => '',
-                'expiration_date' => '',
+                'expiration_date' => null,
                 'original_user_id_name' => 'drupal_user_id',
                 'original_user_id_value' => $account->uid,
                 'extra' => array(
@@ -398,16 +425,40 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
           $user = chamilo_soap_call('registration', 'WSCreateUser', $params);
         }
 
+        // Make call
+//        $user = chamilo_soap_call('user_manager', $action, array(
+//        $user = chamilo_soap_call('registration', $action, array(
+//          'original_user_id_value' => $account->uid,
+//          'original_user_id_name' => 'drupal_user_id',
+//          'firstname' => $fname,
+//          'lastname' => $lname,
+//          'username' => $edit['name'],
+//          'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
+//          'email' => $edit['mail'],
+//          'status' => null,
+//          'phone' => null,
+//          'expiration_date' => null,
+//          'extra' => null,
+//          'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
+
+//          'loginname' => $edit['name'], 
+//          'password' => ($edit['pass'] ? $edit['pass'] : $account->pass),
+//          'password_crypted' => 1,
+//          'email' => $edit['mail'],
+//          'firstname' => $fname,
+//          'lastname' => $lname,
+//        ));
         // Save
         if (!isset($users[$account->uid])) {
           $users[$account->uid] = $account->uid;
           variable_set('chamilo_accounts', $users);
         }
-        drupal_set_message('User succesfully syncronized with Chamilo.');
+        //drupal_set_message('User succesfully syncronized with Chamilo.');
     }
     if ($connect_access || $admin_access) {
       chamilo_save_user_data($edit, $account, $category);
     }
+//  }
 }
 
 /**
@@ -466,14 +517,14 @@ function chamilo_save_user_data(&$edit, &$account, $category, $register = FALSE)
     ->execute();
 
   if ($save_data) {
-    $edit = (object)array(
+    $edit_chamilo_user = (object)array(
       'user_id' => $account->uid,
       'duser' => $data['duser'],
       'apikey' => $data['apikey'],
       'course_visibility' => $data['course_visibility'],
       'agenda_time_frame' => $data['agenda_time_frame'],
     );
-    drupal_write_record('chamilo_user', $edit);
+    drupal_write_record('chamilo_user', $edit_chamilo_user);
   }
 }
 
@@ -533,7 +584,8 @@ function chamilo_get_signature($type = CHAMILO_GLOBAL_SIGNATURE) {
       }
       break;
      case CHAMILO_SECRET_KEY:
-         $chamilo_apikey = sha1($_SERVER['SERVER_ADDR'] . variable_get('chamilo_appkey', ''));
+         $addr = (CHAMILO_DRUPAL_VISIBLE_IP == '' ? $_SERVER['SERVER_ADDR'] : CHAMILO_DRUPAL_VISIBLE_IP);
+         $chamilo_apikey = sha1($addr . variable_get('chamilo_appkey', ''));
          return $chamilo_apikey;
      break;
     default:
@@ -560,10 +612,10 @@ function chamilo_block_info() {
     'info' => t('My Chamilo courses'),
     'weight' => 0,
   );
-  $blocks['user_logout'] = array(
-    'info' => t('Logout from Chamilo'),
-    'weight' => 0,
+  $blocks['chamilo_search_course'] = array(
+    'info' => t('Block allows you to find courses.'),
   );
+
   return $blocks;
 }
 
@@ -633,11 +685,9 @@ function chamilo_block_view($delta = '') {
         );
       }
       break;
-    case 'user_logout':
-      if (!empty($_COOKIE['Drupal_visitor_chamilo_logout_requested'])) {
-        user_cookie_save(array('chamilo_logout_requested' => null));
-        drupal_add_js('(function ($) { $().ready(function(){ window.location.replace("'.$_COOKIE['Drupal_visitor_chamilo_logout_requested'].'");});})(jQuery)', 'inline');
-      }
+
+    case 'chamilo_search_course':
+      $block['content'] = drupal_get_form('chamilo_search_course_form');
       break;
   }
   return $block;
@@ -683,6 +733,12 @@ function chamilo_theme($existing, $type, $theme, $path) {
     ),
     'chamilo_course_list' => array(
       'arguments' => array('courses' => NULL),
+    ),
+    'chamilo_course_detail_ajax' => array(
+      'template' => 'chamilo-course-detail-ajax',
+    ),
+    'chamilo_search_course_page' => array(
+      'template' => 'chamilo-search-course-page',
     ),
   );
 }
@@ -747,6 +803,10 @@ function chamilo_permission() {
       'title' => t('connect with own Chamilo account'),
       'description' => t('Access to SSO and user blocks.'),
     ),
+    'sync users with Chamilo accounts' => array(
+      'title' => t('sync users with Chamilo accounts'),
+      'description' => t('Let user synchronize users with Chamilo accounts.'),
+    ),
   );
 }
 
@@ -793,11 +853,37 @@ function chamilo_get_service_path($service) {
 }
 
 /**
- * getArea (returns the area field from a given drupal user id)
+ * Implements hook_form().
+ */
+function chamilo_search_course_form($form, &$form_state) {
+  $form['text_search_course'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Search course:'),
+  );
+
+  $form['search_course'] = array(
+    '#type' => 'submit',
+    '#value' => t('Search'),
+    '#submit' => array('chamilo_search_course_path'), 
+  );
+
+  return $form;
+}
+
+/**
+ * function that builds the path of the search page.
+ */
+function chamilo_search_course_path($form, &$form_state) {
+  $text_search = $form_state['values']['text_search_course'];
+  drupal_goto('buscar-curso/' . $text_search);
+}
+
+/**
+ * get_area (returns the area field from a given drupal user id)
  * @param   string  Drupal user id
  * @return  array  Profile area field
  */
-function getArea($drupalUserId) {
+function get_area($drupalUserId) {
     $area = array(
         'field_name' => 'area',
         'field_value' => '-'
