@@ -331,7 +331,7 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
               $users[$account->uid] = $account->uid;
               variable_set('chamilo_accounts', $users);
             }
-            drupal_set_message('User succesfully syncronized with Chamilo.');
+            drupal_set_message(t('User succesfully syncronized with Chamilo.'));
         }        
 //      } else { // Unlink account
         // Save
