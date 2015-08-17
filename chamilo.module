@@ -69,6 +69,7 @@ function chamilo_sso_auth($account) {
     'master_auth_uri' => $master_auth_uri,
     'lifetime' => time() + 3600,
     'target' => filter_xss($_GET['sso_target']),
+    'ruri' => (empty($_GET['sso_ruri'])?'':$_GET['sso_ruri']), // referrer URI on the Chamilo portal
   );
   $cookie = base64_encode(serialize($sso));
 
