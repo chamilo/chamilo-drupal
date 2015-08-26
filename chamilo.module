@@ -69,6 +69,7 @@ function chamilo_sso_auth($account) {
     'master_auth_uri' => $master_auth_uri,
     'lifetime' => time() + 3600,
     'target' => filter_xss($_GET['sso_target']),
+    'ruri' => (empty($_GET['sso_ruri'])?'':$_GET['sso_ruri']), // referrer URI on the Chamilo portal
   );
   $cookie = base64_encode(serialize($sso));
 
@@ -331,7 +332,7 @@ function chamilo_user_insert(&$edit, &$account, $category = NULL) {
               $users[$account->uid] = $account->uid;
               variable_set('chamilo_accounts', $users);
             }
-            drupal_set_message('User succesfully syncronized with Chamilo.');
+            drupal_set_message(t('User succesfully syncronized with Chamilo.'));
         }        
 //      } else { // Unlink account
         // Save
