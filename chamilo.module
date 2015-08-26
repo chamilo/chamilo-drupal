@@ -279,7 +279,9 @@ function chamilo_user_load($users) {
 function chamilo_user_logout($account) {
     $path = chamilo_sso_protocol().variable_get('chamilo_server', '').'/index.php?logout=logout&no_redirect=1';
     session_destroy();
-    drupal_goto($path);
+    if (empty($_GET['stop'])) {
+      drupal_goto($path);
+    }
 }
 
 /**
