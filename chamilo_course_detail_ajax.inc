@@ -28,6 +28,7 @@ function chamilo_course_detail($user_id, $course_id) {
 function chamilo_course_ajax_detail($ajax, $course_id) {
   if (user_is_logged_in()) {
     global $user;
+    $course_id = intval($course_id);
     $course_detail = chamilo_course_detail($user->uid, $course_id);
 
     $variables = array(
@@ -58,6 +59,7 @@ function chamilo_course_ajax_detail($ajax, $course_id) {
  * Function to the calling ajax close.
  */
 function chamilo_close_course_ajax_detail($ajax, $course_id) {
+  $course_id = intval($course_id);
   if (user_is_logged_in()) {
     if ($ajax == 'ajax') {
       $id_replace = '#ajax-detail-' . $course_id;
