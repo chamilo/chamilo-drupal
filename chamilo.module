@@ -365,10 +365,13 @@ function chamilo_user_update(&$edit, &$account, $category = NULL) {
       // Sync account
       // Check as chamilo account
         $params = array(
-                'username' => $edit['name'],
+                'original_user_id_value' => $account->uid,
+                'original_user_id_name' => 'drupal_user_id',
                 'secret_key' => chamilo_get_signature(CHAMILO_SECRET_KEY),
         );
-        $chamilo_account = chamilo_soap_call('registration', 'WSGetUserFromUsername', $params);
+        if (isset($edit['name']) ? $edit['name'] != '' : FALSE) {
+            $chamilo_account = chamilo_soap_call('registration', 'WSGetUser', $params);
+        }
 //old version that was not working        
         // Deterimine wether to Create or Override account at Chamilo
 //        if (isset($chamilo_account->firstName) ? $chamilo_account->username == '' : FALSE) {
