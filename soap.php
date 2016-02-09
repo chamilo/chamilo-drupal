@@ -29,13 +29,15 @@ class ChamiloConnector {
             '/includes/bootstrap.inc',
             '/includes/cache.inc',
             '/includes/common.inc',
+            '/includes/lock.inc',
             '/includes/mail.inc',
-            '/includes/module.inc',
             '/includes/path.inc',
             '/includes/session.inc',
             '/includes/token.inc',
             '/includes/unicode.inc',
+            '/includes/module.inc',
             '/modules/field/field.module',
+            '/modules/field/modules/field_sql_storage/field_sql_storage.module',
             '/modules/field/field.attach.inc',
             '/modules/filter/filter.module',
             '/modules/system/system.mail.inc',
@@ -78,8 +80,31 @@ class ChamiloConnector {
      * @return  array Existing user extra field or an empty array
      */
     private function getExistingUserExtraField($extraField) {
-        $key = array_shift(array_keys($extraField));
-        return Database::getConnection()->schema()->fieldExists('users', $key) ? $extraField : array();
+        return Database::getConnection()->schema()->fieldExists('users', $extraField) ? $extraField : array();
+    }
+
+    /**
+     * @param array $extraFields
+     * @return array
+     */
+    private function getExistingUserExtraFieldInTable($extraFields)
+    {
+        $resultExtraFields = array();
+        foreach ($extraFields as $extraField => $value) {
+            // If field does not exists in the user table check the "extra fields" tables
+            if (!$this->getExistingUserExtraField($extraField)) {
+                $tableName = 'field_data_field_' . $extraField;
+                $tableExists = Database::getConnection()->schema()->tableExists($tableName);
+                if ($tableExists) {
+                    $exists = Database::getConnection()->schema()->fieldExists($tableName, 'field_'.$extraField . '_value') ? $extraField : array();
+                    if ($exists) {
+                        $resultExtraFields['field_'.$extraField]['und'][]['value'] = $value;
+                    }
+                }
+            }
+        }
+
+        return $resultExtraFields;
     }
 
     /**
@@ -88,17 +113,36 @@ class ChamiloConnector {
      * @param   array       User extra fields
      * @return  int|bool    User id. Returns false if failed
      */
-    public function addUser($fields, $extraFields = null) {
+    public function addUser($fields, $extraFields = null)
+    {
         $this->defineConstants();
         $this->includeFiles();
+        $language = array(
+            'language' => 'es',
+            'name' => 'Spanish',
+            'native' => 'Espa\xc3\xb1ol',
+            'direction' => '0',
+            'enabled' => '1',
+            'plurals' =>'2',
+            'formula' => '($n!=1)',
+            'domain' => '',
+            'prefix' => 'es',
+            'weight' => '0',
+            'javascript' => 'Keveksn1_L09RyfFu1bShDd32KpGOTS4DyCt8ulpEcY',
+            'provider' => 'language-default'
+        );
+        $GLOBALS['language'] = (object)$language;
+
         $this->setConnectionInfo();
         $uid = false;
         // Save the user only if the username is available in Drupal
         if (!user_load_by_name($fields['name'])) {
             if (!is_null($extraFields)) {
-                $extraFields = $this->getExistingUserExtraFields($extraFields);
+                //$extraFields = $this->getExistingUserExtraFields($extraFields);
+                $extraFields = $this->getExistingUserExtraFieldInTable($extraFields);
                 $fields = array_merge($fields, $extraFields);
             }
+
             $user = user_save(new StdClass(), $fields);
             $uid = $user->uid;
         }
