@@ -1,5 +1,5 @@
-milo-Drupal module
-====================
+Chamilo-Drupal module
+=====================
 This module provides connectivity between a Drupal website and a Chamilo
 LMS. Although stable, this module still lacks a good pack of usability
 features, so please try it on a test server before you put it online.
